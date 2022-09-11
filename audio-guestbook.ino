@@ -164,10 +164,6 @@ void loop() {
         Serial.println("Handset lifted");
         mode = Mode::Prompting; print_mode();
       }
-      else if(buttonPlay.fallingEdge()) {
-        //playAllRecordings();
-        playLastRecording();
-      }
       break;
 
     case Mode::Prompting:
@@ -176,24 +172,15 @@ void loop() {
       // Play the greeting inviting them to record their message
       playWav1.play("greeting.wav");    
       // Wait until the  message has finished playing
-//      while (playWav1.isPlaying()) {
       while (!playWav1.isStopped()) {
         // Check whether the handset is replaced
         buttonRecord.update();
-        buttonPlay.update();
         // Handset is replaced
         if(buttonRecord.risingEdge()) {
           playWav1.stop();
           mode = Mode::Ready; print_mode();
           return;
         }
-        if(buttonPlay.fallingEdge()) {
-          playWav1.stop();
-          //playAllRecordings();
-          playLastRecording();
-          return;
-        }
-        
       }
       // Debug message
       Serial.println("Starting Recording");
@@ -323,17 +310,8 @@ void playAllRecordings() {
     }
     entry.close();
 
-//    while (playWav1.isPlaying()) { // strangely enough, this works for playRaw, but it does not work properly for playWav
     while (!playWav1.isStopped()) { // this works for playWav
-      buttonPlay.update();
-      buttonRecord.update();
-      // Button is pressed again
-//      if(buttonPlay.risingEdge() || buttonRecord.risingEdge()) { // FIX
-      if(buttonPlay.fallingEdge() || buttonRecord.risingEdge()) { 
-        playWav1.stop();
-        mode = Mode::Ready; print_mode();
-        return;
-      }   
+      buttonRecord.update(); 
     }
   }
   // All files have been played
@@ -358,15 +336,7 @@ void playLastRecording() {
       playWav1.play(filename);
       mode = Mode::Playing; print_mode();
       while (!playWav1.isStopped()) { // this works for playWav
-      buttonPlay.update();
-      buttonRecord.update();
-      // Button is pressed again
-//      if(buttonPlay.risingEdge() || buttonRecord.risingEdge()) { // FIX
-      if(buttonPlay.fallingEdge() || buttonRecord.risingEdge()) {
-        playWav1.stop();
-        mode = Mode::Ready; print_mode();
-        return;
-      }   
+      buttonRecord.update(); 
     }
       // file has been played
   mode = Mode::Ready; print_mode();  
@@ -399,9 +369,7 @@ void wait(unsigned int milliseconds) {
 
   while (msec <= milliseconds) {
     buttonRecord.update();
-    buttonPlay.update();
     if (buttonRecord.fallingEdge()) Serial.println("Button (pin 0) Press");
-    if (buttonPlay.fallingEdge()) Serial.println("Button (pin 1) Press");
     if (buttonRecord.risingEdge()) Serial.println("Button (pin 0) Release");
     if (buttonPlay.risingEdge()) Serial.println("Button (pin 1) Release");
   }
